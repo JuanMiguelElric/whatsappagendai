@@ -1,0 +1,6 @@
+# Ignorar a pasta node_modules
+node_modules/
+
+# Ignorar a pasta .wwebjs_cache
+.wwebjs_cache/
+.wwebjs_auth/
