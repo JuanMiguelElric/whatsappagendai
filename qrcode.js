@@ -62,9 +62,20 @@ function getNumbers(numero, mensagem, user_id) {
 // Função para criar uma nova sessão e enviar mensagens  
 const whatsappLogado = (id, message, numero) => {  
     const client = new Client({  
-        puppeteer: { headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] },  
+        puppeteer: {  
+            executablePath: '/usr/bin/chromium-browser', // ajuste de acordo com seu sistema  
+            headless: true,  // certifique-se de que isso esteja definido como verdadeiro  
+            args: [  
+                '--no-sandbox',   
+                '--disable-setuid-sandbox',  
+                '--disable-gpu', // desabilita a GPU  
+                '--disable-dev-shm-usage', // uso de memória compartilhada  
+                '--remote-debugging-port=9222', // porta para depuração remota  
+                // '--window-size=1920,1080', // opcional, ajuste do tamanho da janela  
+            ],  
+        },  
         authStrategy: new LocalAuth({ clientId: id }),  
-    });  
+    }); 
 
     client.on("authenticated", () => {  
         console.log(`Sessão autenticada para o ID: ${id}`);  
@@ -108,7 +119,18 @@ io.on("connection", (socket) => {
 
         if (!allsessionObject[id]) {  
             const client = new Client({  
-                puppeteer: { headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] },  
+                puppeteer: {  
+                    executablePath: '/usr/bin/chromium-browser', // ajuste de acordo com seu sistema  
+                    headless: true,  // certifique-se de que isso esteja definido como verdadeiro  
+                    args: [  
+                        '--no-sandbox',   
+                        '--disable-setuid-sandbox',  
+                        '--disable-gpu', // desabilita a GPU  
+                        '--disable-dev-shm-usage', // uso de memória compartilhada  
+                        '--remote-debugging-port=9222', // porta para depuração remota  
+                        // '--window-size=1920,1080', // opcional, ajuste do tamanho da janela  
+                    ],  
+                },  
                 authStrategy: new LocalAuth({ clientId: id }),  
             });  
 
