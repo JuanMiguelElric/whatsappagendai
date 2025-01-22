@@ -31,22 +31,21 @@ app.get("/", (req, res) => {
 });  
 
 // Endpoint para receber dados do Laravel  
-app.post('/receive-data', (req, res) => {
-    console.log("Requisição recebida com os dados:", req.body);  // Log para ver os dados recebidos
+app.post('/receive-data', (req, res) => {  
+    console.log("Requisição recebida com os dados:", req.body);  
 
-    const message = req.body.message;
-    const numero = req.body.number;
-    const id = req.body.user_id;
+    const message = req.body.message;  
+    const numero = req.body.number;  
+    const id = req.body.user_id;  
 
-    if (!message || !numero || !id) {
-        return res.status(400).json({ error: 'Campos obrigatórios ausentes' });
-    }
+    if (!message || !numero || !id) {  
+        return res.status(400).json({ error: 'Campos obrigatórios ausentes' });  
+    }  
 
-    getNumbers(numero, message, id);
+    getNumbers(numero, message, id);  
 
-    res.status(200).json({ message: 'Dados recebidos com sucesso!' });
-});
-
+    res.status(200).json({ message: 'Dados recebidos com sucesso!' });  
+});  
 
 // Função para processar números no JSON  
 function getNumbers(numero, mensagem, user_id) {  
@@ -55,27 +54,26 @@ function getNumbers(numero, mensagem, user_id) {
         sendMessages(allsessionObject[user_id], numero, mensagem);  
     } else {  
         console.log("Nenhuma sessão encontrada. Criando nova sessão.");  
-        whatsappLogado(user_id, mensagem, numero); // Corrigido  
+        whatsappLogado(user_id, mensagem, numero);  
     }  
 }  
 
 // Função para criar uma nova sessão e enviar mensagens  
-const whatsappLogado = (id, message, numero) => {  
+const whatsappLogado = async (id, message, numero) => {  
     const client = new Client({  
         puppeteer: {  
-            executablePath: '/usr/bin/chromium-browser', // ajuste de acordo com seu sistema  
-            headless: true,  // certifique-se de que isso esteja definido como verdadeiro  
+           // executablePath: '/usr/bin/chromium-browser', // ajuste de acordo com seu sistema  
+            headless: true,  
             args: [  
-                '--no-sandbox',   
+                '--no-sandbox',  
                 '--disable-setuid-sandbox',  
-                '--disable-gpu', // desabilita a GPU  
-                '--disable-dev-shm-usage', // uso de memória compartilhada  
-                '--remote-debugging-port=9222', // porta para depuração remota  
-                // '--window-size=1920,1080', // opcional, ajuste do tamanho da janela  
+                '--disable-gpu',  
+                '--disable-dev-shm-usage',  
+                '--remote-debugging-port=9222',  
             ],  
         },  
         authStrategy: new LocalAuth({ clientId: id }),  
-    }); 
+    });  
 
     client.on("authenticated", () => {  
         console.log(`Sessão autenticada para o ID: ${id}`);  
@@ -87,7 +85,21 @@ const whatsappLogado = (id, message, numero) => {
         sendMessages(client, numero, message); // Dispara as mensagens  
     });  
 
-    client.initialize();  
+    // Lógica de tentativa para inicializar o cliente  
+    const initializeClient = async (retries = 5) => {  
+        try {  
+            await client.initialize();  
+        } catch (error) {  
+            console.error(`Erro ao inicializar o cliente para o ID ${id}:`, error);  
+            if (retries > 0) {  
+                console.log(`Tentando novamente... (Restante: ${retries})`);  
+                await new Promise(res => setTimeout(res, 2000)); // Espera 2 segundos  
+                await initializeClient(retries - 1);  
+            }  
+        }  
+    };  
+
+    await initializeClient();  
 };  
 
 // Função para enviar mensagens  
@@ -113,22 +125,22 @@ io.on("connection", (socket) => {
         socket.emit('hello server');  
     });  
 
-    socket.on("createSession", (data) => {  
+    // Criação de sessão pelo WebSocket  
+    socket.on("createSession", async (data) => {  
         console.log("Criando sessão para:", data);  
         const { id } = data;  
 
         if (!allsessionObject[id]) {  
             const client = new Client({  
                 puppeteer: {  
-                    executablePath: '/usr/bin/chromium-browser', // ajuste de acordo com seu sistema  
-                    headless: true,  // certifique-se de que isso esteja definido como verdadeiro  
+                   // executablePath: '/usr/bin/chromium-browser', // ajuste de acordo com seu sistema  
+                    headless: true,  
                     args: [  
-                        '--no-sandbox',   
+                        '--no-sandbox',  
                         '--disable-setuid-sandbox',  
-                        '--disable-gpu', // desabilita a GPU  
-                        '--disable-dev-shm-usage', // uso de memória compartilhada  
-                        '--remote-debugging-port=9222', // porta para depuração remota  
-                        // '--window-size=1920,1080', // opcional, ajuste do tamanho da janela  
+                        '--disable-gpu',  
+                        '--disable-dev-shm-usage',  
+                        '--remote-debugging-port=9222',  
                     ],  
                 },  
                 authStrategy: new LocalAuth({ clientId: id }),  
@@ -149,7 +161,21 @@ io.on("connection", (socket) => {
                 socket.emit('ready', { id, message: 'Cliente está pronto!' });  
             });  
 
-            client.initialize();  
+            // Inicialização do cliente com lógica de tentativa  
+            const initializeClient = async (retries = 5) => {  
+                try {  
+                    await client.initialize();  
+                } catch (error) {  
+                    console.error(`Erro ao inicializar o cliente para o ID ${id}:`, error);  
+                    if (retries > 0) {  
+                        console.log(`Tentando novamente... (Restante: ${retries})`);  
+                        await new Promise(res => setTimeout(res, 2000)); // Espera 2 segundos  
+                        await initializeClient(retries - 1);  
+                    }  
+                }  
+            };  
+
+            await initializeClient();  
         } else {  
             console.log(`Sessão já existente para o ID: ${id}`);  
         }  
