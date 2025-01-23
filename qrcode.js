@@ -62,7 +62,7 @@ function getNumbers(numero, mensagem, user_id) {
 const whatsappLogado = async (id, message, numero) => {  
     const client = new Client({  
         puppeteer: {  
-           // executablePath: '/usr/bin/chromium-browser', // ajuste de acordo com seu sistema  
+           //  executablePath: '/usr/bin/chromium-browser', // ajuste de acordo com seu sistema  
             headless: true,  
             args: [  
                 '--no-sandbox',  
