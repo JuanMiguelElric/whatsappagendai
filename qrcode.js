@@ -133,7 +133,7 @@ io.on("connection", (socket) => {
         if (!allsessionObject[id]) {  
             const client = new Client({  
                 puppeteer: {  
-                   // executablePath: '/usr/bin/chromium-browser', // ajuste de acordo com seu sistema  
+                    executablePath: '/usr/bin/chromium-browser', // ajuste de acordo com seu sistema  
                     headless: true,  
                     args: [  
                         '--no-sandbox',  
@@ -148,7 +148,7 @@ io.on("connection", (socket) => {
 
             client.on("qr", (qr) => {  
                 console.log(`QR Code para o ID ${id}:`, qr);  
-                socket.emit("qr", { qr });  
+               // socket.emit("qr", { qr });  
             });  
 
             client.on("authenticated", () => {  
